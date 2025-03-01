@@ -18,7 +18,7 @@ struct ContentView: View {
                 .padding()
                 .bold()
                 .background(
-                    Color(.green))
+                    Color(.blue))
             
             VStack {
                 // Display computer's hand
@@ -57,6 +57,8 @@ struct ContentView: View {
         .onAppear {
             game.dealHands()
             //game.dealCommunityCards()
+            // checking if pushing works
+            
         }
     }
 }
