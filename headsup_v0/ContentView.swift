@@ -10,56 +10,90 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var game = PokerGame()
+    @State private var raiseAmountText: String = "40"
 
     var body: some View {
 
-        VStack {
+        VStack (spacing: 16) {
             Text("Heads Up Poker")
-                .padding()
-                .bold()
-                .background(
-                    Color(.blue))
+                .font(.largeTitle)
             
-            VStack {
-                // Display computer's hand
-                Text("Computer's Hand: \(game.computer.hand.map { "\($0.rank.rawValue)\($0.suit.rawValue)" }.joined(separator: ", "))")
-                Text("Computer Stack: \(game.computer.stack)")
+            VStack (alignment: .leading, spacing: 6) {
+                Text("Computer: \(game.computer.stack)")
+                Text("Hand: \(cardsString(game.computer.hand))")
             }
+
             Spacer()
-            VStack{
-                // Display community cards
-                Text("Community Cards: \(game.communityCards.map { "\($0.rank.rawValue)\($0.suit.rawValue)" }.joined(separator: ", "))")
+            
+            VStack(spacing: 8) {
+                
+                Text("Dealer: \(game.dealerIsPlayer ? "You" : "Dealer")")
+                Text("Street: \(game.street.rawValue.capitalized)")
+                
+                Text("Board: \(cardsString(game.communityCards))")
+                    .font(.title)
+                    .bold()
+                
                 Text("Pot: \(game.pot)")
+                Text("To Call — You: \(game.toCallPlayer), CPU: \(game.toCallComputer)")
+                Text("Min Raise: \(game.minRaise)")
+                Text("Action: \(game.actorToAct == .player ? "You" : "Computer")")
+                                .bold()
+                Text(game.message).font(.footnote).foregroundStyle(.secondary)
             }
-            Spacer()
-            VStack {
-                // Display computer's hand
-                Text("Your Hand: \(game.player.hand.map { "\($0.rank.rawValue)\($0.suit.rawValue)" }.joined(separator: ", "))")
-                Text("Your Stack: \(game.player.stack)")
-                HStack {
-                        Button("Check") {
-                            // Implement check action
-                        }
-                        Button("Call") {
-                            // Implement call action
-                        }
-                        Button("Raise") {
-                            // Implement raise action
-                        }
-                        Button("Fold") {
-                            // Implement fold action
-                        }
-                }
-                .padding()
-            }
-        }
-        .padding()
-        .onAppear {
-            game.dealHands()
-            //game.dealCommunityCards()
-            // checking if pushing works
             
+            HStack {
+                Button("Deal / Next Hand") { game.startNewHand() }
+                .buttonStyle(.bordered)
+            }
+            .padding(.top, 8)
+            
+
+
+            Spacer()
+            
+            VStack(spacing: 6) {
+                Text("You: \(game.player.stack)")
+                Text("Hand: \(cardsString(game.player.hand))")
+            }
+                        VStack {
+                HStack(spacing: 10) {
+                    Button(action: { game.playerCheckOrCall() }) {
+                        Text(game.toCallPlayer == 0 ? "Check" : "Call \(game.toCallPlayer)")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(game.actorToAct != .player)
+
+                    Button("Fold") {
+                        game.playerFold()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(game.actorToAct != .player)
+                }
+
+                HStack(spacing: 10) {
+                    TextField("Bet/Raise", text: $raiseAmountText)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 100)
+
+                    Button("Bet/Raise") {
+                        let amt = Int(raiseAmountText) ?? game.minRaise
+                        game.playerBetOrRaise(amount: amt)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(game.actorToAct != .player)
+                }
+            }
+            .padding(.horizontal)
+
+
         }
+    }
+    
+    private func cardsString(_ cards: [Card]) -> String {
+        cards.map { "\($0.rank.rawValue)\($0.suit.rawValue)" }.joined(separator: " ")
     }
 }
 
